@@ -5,11 +5,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight,alt,wide.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/stdlib/inputs.css">
 <link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight,alt,wide.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/stdlib/inputs.css">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="./_observablehq/stdlib/inputs.js">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.13/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/binary-search-bounds@2.0.5/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3-array@3.2.4/+esm">
@@ -44,6 +47,7 @@
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3-zoom@3.0.0/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/delaunator@5.0.0/+esm">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/htl@0.3.1/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/internmap@2.0.3/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/interval-tree-1d@1.0.4/+esm">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/isoformat@0.2.1/+esm">
@@ -57,7 +61,17 @@ const forecast = FileAttachment("./data/forecast.json").json()
 return {forecast};
 }});
 
-define({id: "d82c6d1c", inputs: ["Plot"], outputs: ["temperaturePlot"], body: (Plot) => {
+define({id: "4113c56d", inputs: ["view","Inputs","d3","forecast"], outputs: ["temp"], body: (view,Inputs,d3,forecast) => {
+const temp = view(
+  Inputs.range(
+    d3.extent(forecast.properties.periods, (d) => d.temperature),
+    { step: 1, label: "Degrees (F)" }
+  )
+)
+return {temp};
+}});
+
+define({id: "3f2d95bd", inputs: ["Plot","temp"], outputs: ["temperaturePlot"], body: (Plot,temp) => {
 function temperaturePlot(data, { width } = {}) {
   return Plot.plot({
     title: "Hourly temperature forecast",
@@ -65,13 +79,16 @@ function temperaturePlot(data, { width } = {}) {
     x: { type: "utc", ticks: "day", label: null },
     y: { grid: true, inset: 10, label: "Degrees (F)" },
     marks: [
-      Plot.lineY(data.properties.periods, {
-        x: "startTime",
-        y: "temperature",
-        z: null, // varying color, not series
-        stroke: "temperature",
-        curve: "step-after",
-      }),
+      Plot.lineY(
+        data.properties.periods.filter((t) => temp <= t.temperature),
+        {
+          x: "startTime",
+          y: "temperature",
+          z: null, // varying color, not series
+          stroke: "temperature",
+          curve: "step-after",
+        }
+      ),
     ],
   })
 }
@@ -113,7 +130,8 @@ resize((width) => temperaturePlot(forecast, {width}))
 <main id="observablehq-main" class="observablehq">
 <h1 id="weather-report" tabindex="-1"><a class="observablehq-header-anchor" href="#weather-report">Weather report</a></h1>
 <div id="cell-3e547827" class="observablehq observablehq--block"></div>
-<div id="cell-d82c6d1c" class="observablehq observablehq--block"></div>
+<div id="cell-4113c56d" class="observablehq observablehq--block"></div>
+<div id="cell-3f2d95bd" class="observablehq observablehq--block"></div>
 <div id="cell-8db0d1a8" class="observablehq observablehq--block observablehq--loading"></div>
 <div class="grid grid-cols-4">
   <div class="card grid-colspan-4">one–two</div>
@@ -126,6 +144,6 @@ resize((width) => temperaturePlot(forecast, {width}))
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./example-report"><span>Example report</span></a></nav>
-<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-02-17T08:17:29">Feb 17, 2024</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-02-18T08:27:57">Feb 18, 2024</a>.</div>
 </footer>
 </div>
